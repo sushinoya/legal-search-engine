@@ -30,7 +30,7 @@ def index(input_directory, output_file_dictionary, output_file_postings):
 
     save_to_disk(doc_length_dictionary, "doc_length_dictionary.txt")
 
-    for key, value in dictionary.iteritems():
+    for key, value in dictionary.items():
         dictionary[key] = sorted(value.items(), key=lambda x: -x[1])
     
     # Generates a file of human readable postings and occurences. Maily used for debugging
@@ -106,14 +106,14 @@ def process_word(word):
     return preprocess_raw_word(word)
 
 def usage():
-    print "usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file"
+    print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
 
 input_directory = output_file_dictionary = output_file_postings = None
 
 if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'i:d:p:')
-    except getopt.GetoptError, err:
+    except getopt.GetoptError:
         usage()
         sys.exit(2)
         

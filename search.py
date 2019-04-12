@@ -63,7 +63,7 @@ def get_superset():
 
 
 def usage():
-    print "usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results"
+    print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
 
 
 # MAIN SEARCH FUNCTION
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'd:p:q:o:')
-    except getopt.GetoptError, err:
+    except getopt.GetoptError:
         usage()
         sys.exit(2)
 
