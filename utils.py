@@ -80,7 +80,8 @@ def get_doc_freq_for_term(term, dictionary):
 
 # Save an object to disk 
 def save_to_disk(obj, file):
-  	with open(file, 'w') as fr: pickle.dump(obj, fr)
+    with open(file, 'wb') as fr:
+        pickle.dump(obj, fr)
 
 
 
@@ -103,5 +104,7 @@ def generate_occurences_file(dictionary):
 	len_dict = {word: len(v) for word, v in dictionary.items()}
 	with open("occurences.txt", 'w') as f:
 		for k, v in sorted(len_dict.items(), key=lambda x: x[1]):
-			f.write("{}: {} -> {}\n".format(k.ljust(15), str(v).ljust(5), dictionary[k]))
+			f.write("{}: {} -> {}\n".format(k.ljust(30), str(v).ljust(5), dictionary[k]))
     
+def convert_tuple_to_string(tuple):
+    return ' '.join(tuple)

@@ -7,27 +7,38 @@ import getopt
 import linecache
 import pickle
 import math
-from utils import preprocess_raw_text, deserialize_dictionary, save_to_disk, clock_and_execute, generate_occurences_file, preprocess_raw_word
+import pandas
+from utils import preprocess_raw_text, deserialize_dictionary, save_to_disk, clock_and_execute, generate_occurences_file, preprocess_raw_word, convert_tuple_to_string
 from collections import defaultdict, Counter
 
-def index(input_directory, output_file_dictionary, output_file_postings):
-    files = sorted(os.listdir(input_directory))
+def index(input_file, output_file_dictionary, output_file_postings):
+    df = pandas.read_csv(input_file)
     dictionary = defaultdict(lambda: defaultdict(int))
     doc_length_dictionary = {}
 
-    # Store the terms in a dictionary of {word: dict of {file: term-frequency}}
-    for file in files:
-        terms_in_file = process_file(input_directory, file)
+    for row in df.itertuples(index=False):
+        content = getattr(row, "content")
+        document_id = getattr(row, "document_id")
+        
+        processed_single_word = process_content(content)
+        processed_biword = list(nltk.ngrams(processed_single_word, 2))
+        processed_biword = list(map(convert_tuple_to_string, processed_biword))
+        
+        processed_triword = list(nltk.ngrams(processed_single_word, 3))
+        processed_triword = list(map(convert_tuple_to_string, processed_triword))
+        
+        processed_single_word.extend(processed_biword)
+        processed_single_word.extend(processed_triword)
 
-        for term in terms_in_file:
-            dictionary[term][int(file)] += 1
+        for term in processed_single_word:
+            dictionary[term][document_id] += 1
 
         # Create dictionary of document length
-        tf_dictionary = Counter(terms_in_file)
+        tf_dictionary = Counter(processed_single_word)
         log_tf_dictionary = { word: 1 + math.log(tf, 10) for word, tf in tf_dictionary.items() } 
         length_of_log_tf_vector = math.sqrt(sum([dim * dim for dim in log_tf_dictionary.values()]))
-        doc_length_dictionary[int(file)] = length_of_log_tf_vector
-
+        doc_length_dictionary[document_id] = length_of_log_tf_vector
+        
     save_to_disk(doc_length_dictionary, "doc_length_dictionary.txt")
 
     for key, value in dictionary.items():
@@ -35,7 +46,7 @@ def index(input_directory, output_file_dictionary, output_file_postings):
     
     # Generates a file of human readable postings and occurences. Maily used for debugging
     # Each line is of the format: `word`: num_of_occurences -> `[2, 10, 34, ...]` (postings list)
-    # generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
+    generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
 
     # Saves the postings file and dictionary file to disk
     process_dictionary(dictionary, output_file_dictionary, output_file_postings)
@@ -58,8 +69,8 @@ and only load those into the program.
 def save_to_postings_and_generate_dictionary(dictionary, output_file_postings):
     dictionary_to_be_saved = {}
     current_pointer = 0
-    with open(output_file_postings, 'w') as f:
-        for k, v in dictionary.iteritems():
+    with open(output_file_postings, 'wb') as f:
+        for k, v in dictionary.items():
             sorted_posting = v
             f.write(pickle.dumps(sorted_posting)) # Use pickle to save the posting and write to it
             byte_size = f.tell() - current_pointer
@@ -69,13 +80,12 @@ def save_to_postings_and_generate_dictionary(dictionary, output_file_postings):
     return dictionary_to_be_saved
 
 '''
-Process a file and return a list of all terms in that file.
+Process a content and return a list of all terms in that file.
 '''
-def process_file(input_directory, file):
-    with open(os.path.join(input_directory, file), 'r') as content_file:
-        text = content_file.read().replace('\n', ' ')
-        preprocessed_text = preprocess_raw_text(text)
-        return process_text(preprocessed_text)
+def process_content(content):
+    text = content.replace('\n', ' ')
+    preprocessed_text = preprocess_raw_text(text)
+    return process_text(preprocessed_text)
 
 
 '''
@@ -108,7 +118,7 @@ def process_word(word):
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
 
-input_directory = output_file_dictionary = output_file_postings = None
+input_file = output_file_dictionary = output_file_postings = None
 
 if __name__ == "__main__":
     try:
@@ -119,7 +129,7 @@ if __name__ == "__main__":
         
     for o, a in opts:
         if o == '-i': # input directory
-            input_directory = a
+            input_file = a
         elif o == '-d': # dictionary file
             output_file_dictionary = a
         elif o == '-p': # postings file
@@ -127,10 +137,10 @@ if __name__ == "__main__":
         else:
             assert False, "unhandled option"
             
-    if input_directory == None or output_file_postings == None or output_file_dictionary == None:
+    if input_file == None or output_file_postings == None or output_file_dictionary == None:
         usage()
         sys.exit(2)
 
     print("Indexing...")
-    clock_and_execute(index, input_directory, output_file_dictionary, output_file_postings)
+    clock_and_execute(index, input_file, output_file_dictionary, output_file_postings)
 

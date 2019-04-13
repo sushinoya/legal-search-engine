@@ -3,19 +3,19 @@
 # If --o, use the entire reuters data
 if [[ $* == *-o* ]]
 then
-  directory_of_documents=reuters_original/training
+  dataset_file=dataset/dataset.csv
 else
-  directory_of_documents=reuters_chunk/training
+  dataset_file=dataset/dataset_chunked.csv
 fi
 dictionary_file=dictionary.txt
 postings_file=postings.txt
-file_of_queries=query.txt
+file_of_queries=dataset/q1.txt
 output_of_results_file=output.txt
 
 if [[ $* == *-no-index* ]]
 then
-  python search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
+  python3 search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
 else
-  python index.py -i $directory_of_documents -d $dictionary_file -p $postings_file
-  python search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
+  python3 index.py -i $dataset_file -d $dictionary_file -p $postings_file
+  # python3 search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
 fi
