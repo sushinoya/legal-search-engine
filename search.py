@@ -12,7 +12,7 @@ from heapq import nlargest
 def evaulate_query(query, doc_length_dictionary, dictionary):
     # Stems the query and normalises some terms
     processed_query = utils.preprocess_raw_query(query)
-    query_tokens = nltk.word_tokenize(query)
+    query_tokens = nltk.word_tokenize(processed_query)
     sanitised_query_tokens = [utils.preprocess_raw_word(token) for token in query_tokens]
 
     # We convert it to float here so that operations using N later return floats.
@@ -35,9 +35,11 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
         # Get postings list for token.
         postings = utils.get_postings_for_term(token, dictionary, postings_file)
 
-        # Copmute scores for each document
+        # Compute scores for each document
         for doc_id, term_freq_in_doc in postings:
             log_tf_in_doc = 1 + math.log(term_freq_in_doc, 10)
+
+            #TODO: did we miss calculation of W_t,d the last time? should multiple by idf as well 
             scores[doc_id] += log_tf_in_doc * tf_idf_query_token
 
     # Length of the query vector which can be used for normalisation
@@ -51,8 +53,8 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
         # it then, so it would not make a difference to the final results.
         # scores[doc_id] /= query_vector_length
 
-    # Return the document ids with the 10 highest scores
-    return [x[0] for x in nlargest(10, scores.items(), key=lambda x: x[1])]
+    #return all relevant postings in sorted order
+    return [x[0] for x in sorted(scores.items(), key=lambda kv: -kv[1])]
 
 '''
 Get the list of all the document ids
@@ -70,13 +72,13 @@ def usage():
 def get_postings_for_queries(file_of_queries):
     doc_length_dictionary = utils.deserialize_dictionary('doc_length_dictionary.txt')
     dictionary = utils.deserialize_dictionary(dictionary_file)
-    # List of queries as strings fom the query file
-    queries = [line.rstrip('\n') for line in open(file_of_queries)]
-    for query in queries:
-        output = evaulate_query(query, doc_length_dictionary, dictionary)
-        # Write the result to the output file
-        with open(file_of_output, 'a') as file:
-            file.write(' '.join(map(str, output)) + '\n')
+    
+    query = [line.rstrip('\n') for line in open(file_of_queries)][0]
+    output = evaulate_query(query, doc_length_dictionary, dictionary)
+    
+    # Write the result to the output file
+    with open(file_of_output, 'a') as file:
+        file.write(' '.join(map(str, output)) + '\n')
 
 
 if __name__ == "__main__":

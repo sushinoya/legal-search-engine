@@ -39,7 +39,7 @@ def preprocess_raw_query(query):
 
 # Get the number of documents
 def get_number_of_documents():
-	with open('doc_length_dictionary.txt') as f:
+	with open('doc_length_dictionary.txt', 'rb') as f:
 		dictionary = pickle.load(f)
 	return len(dictionary)
 
@@ -47,7 +47,7 @@ def get_number_of_documents():
 
 # Load the dictionary from dictionary_file_path using pickle
 def deserialize_dictionary(dictionary_file_path):
-	with open(dictionary_file_path) as f:
+	with open(dictionary_file_path, 'rb') as f:
 		dictionary = pickle.load(f)
 	return dictionary
 
@@ -60,7 +60,7 @@ def get_postings_for_term(term, dictionary, postings_file_path):
     # Byte offset and length of data chunk in postings file
     offset, length, doc_freq = dictionary[term]
     
-    with open(postings_file_path, 'r') as f:
+    with open(postings_file_path, 'rb') as f:
         f.seek(offset)
         posting_byte = f.read(length)
         posting_list = pickle.loads(posting_byte)

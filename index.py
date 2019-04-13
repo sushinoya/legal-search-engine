@@ -15,8 +15,12 @@ def index(input_file, output_file_dictionary, output_file_postings):
     df = pandas.read_csv(input_file)
     dictionary = defaultdict(lambda: defaultdict(int))
     doc_length_dictionary = {}
+    num = 1
+    total_entries_len = len(list(df.itertuples(index=False)))
 
     for row in df.itertuples(index=False):
+        print(f'currently indexing number {num}, {num / total_entries_len * 100}% done')
+        num = num+1
         content = getattr(row, "content")
         document_id = getattr(row, "document_id")
         

@@ -3,3 +3,4 @@ dataset/
 __pycache__/
 dictionary.txt
 postings.txt
+occurences.txt

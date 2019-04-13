@@ -17,5 +17,5 @@ then
   python3 search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
 else
   python3 index.py -i $dataset_file -d $dictionary_file -p $postings_file
-  # python3 search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
+  python3 search.py -d $dictionary_file -p $postings_file -q $file_of_queries -o $output_of_results_file
 fi
