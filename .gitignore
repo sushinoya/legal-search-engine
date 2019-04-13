@@ -1,3 +1,5 @@
 dataset/
 .vscode/
 __pycache__/
+dictionary.txt
+postings.txt
