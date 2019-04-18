@@ -39,7 +39,6 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
         for doc_id, term_freq_in_doc in postings:
             log_tf_in_doc = 1 + math.log(term_freq_in_doc, 10)
 
-            #TODO: did we miss calculation of W_t,d the last time? should multiple by idf as well 
             scores[doc_id] += log_tf_in_doc * tf_idf_query_token
 
     # Length of the query vector which can be used for normalisation
