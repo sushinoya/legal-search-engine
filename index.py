@@ -20,25 +20,20 @@ def index(input_file, output_file_dictionary, output_file_postings):
 
     for row in df.itertuples(index=False):
         print(f'currently indexing number {num}, {num / total_entries_len * 100}% done')
-        num = num+1
+        num += 1
         content = getattr(row, "content")
         document_id = getattr(row, "document_id")
         
-        processed_single_word = process_content(content)
-        processed_biword = list(nltk.ngrams(processed_single_word, 2))
-        processed_biword = list(map(convert_tuple_to_string, processed_biword))
-        
-        processed_triword = list(nltk.ngrams(processed_single_word, 3))
-        processed_triword = list(map(convert_tuple_to_string, processed_triword))
-        
-        processed_single_word.extend(processed_biword)
-        processed_single_word.extend(processed_triword)
+        words = process_content(content)
+        biwords = list(map(convert_tuple_to_string, nltk.ngrams(words, 2)))
+        triwords = list(map(convert_tuple_to_string, nltk.ngrams(words, 3)))
+        all_tokens = words + biwords + triwords
 
-        for term in processed_single_word:
+        for term in all_tokens:
             dictionary[term][document_id] += 1
 
         # Create dictionary of document length
-        tf_dictionary = Counter(processed_single_word)
+        tf_dictionary = Counter(words)
         log_tf_dictionary = { word: 1 + math.log(tf, 10) for word, tf in tf_dictionary.items() } 
         length_of_log_tf_vector = math.sqrt(sum([dim * dim for dim in log_tf_dictionary.values()]))
         doc_length_dictionary[document_id] = length_of_log_tf_vector
