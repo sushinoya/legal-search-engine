@@ -7,6 +7,12 @@ from nltk.stem.porter import PorterStemmer
 
 # MARK - TEXT PREPROCESSING FUNCTIONS
 
+def query_chunker(query):
+	return [s.replace("\"", '') for s in query.split(' AND ')]
+
+def query_combiner(query):
+	query.replace("\"", '').replace(' AND ', ' ')
+
 stemmer = PorterStemmer()
 
 def preprocess_raw_word(word):

@@ -41,7 +41,7 @@ def index(input_file, output_file_dictionary, output_file_postings):
     save_to_disk(doc_length_dictionary, "doc_length_dictionary.txt")
 
     for key, value in dictionary.items():
-        dictionary[key] = sorted(value.items(), key=lambda x: -x[1])
+        dictionary[key] = sorted(value.items(), key=lambda x: x[0])
     
     # Generates a file of human readable postings and occurences. Maily used for debugging
     # Each line is of the format: `word`: num_of_occurences -> `[2, 10, 34, ...]` (postings list)
