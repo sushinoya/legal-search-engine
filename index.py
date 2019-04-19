@@ -47,7 +47,7 @@ def index(input_file, output_file_dictionary, output_file_postings):
     
     # Generates a file of human readable postings and occurences. Maily used for debugging
     # Each line is of the format: `word`: num_of_occurences -> `[2, 10, 34, ...]` (postings list)
-    generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
+    #generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
 
     # Saves the postings file and dictionary file to disk
     process_dictionary(dictionary, output_file_dictionary, output_file_postings)
