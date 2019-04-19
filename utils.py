@@ -118,3 +118,6 @@ def convert_tuple_to_string(tuple):
 
 def get_first_of_tuple(lst_of_tuple):
     return [x[0] for x in lst_of_tuple]
+
+def check_and_existence(query):
+	return "AND" in query

@@ -12,18 +12,27 @@ from functools import reduce
 
 # Returns the final output for a query
 def evaulate_query(query, doc_length_dictionary, dictionary):
-    query_chunks = utils.query_chunker(query)
-    processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
+    does_and_exist = utils.check_and_existence(query)
+
+    if does_and_exist:
+        query_chunks = utils.query_chunker(query)
+        processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
+        
+        chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
+        chunk_postings = [utils.get_first_of_tuple(x) for x in chunk_postings]
+
+        #anded_list is the list of postings that satisfy all the AND queries 
+        anded_list = reduce(lambda x, y: evaluate_and(x, y), chunk_postings)
+    else:
+        query_chunks = query.split()
+        processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
+
+    #if the query has no AND, set it to None to be put into get_vsm_scores
+    anded_list = anded_list if does_and_exist else None
     
-    chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
-    chunk_postings = [utils.get_first_of_tuple(x) for x in chunk_postings]
-
-    #anded_list is the list of postings that satisfy all the AND queries 
-    anded_list = reduce(lambda x, y: evaluate_and(x, y), chunk_postings)
-
     #vsm_score is a list of tuple sorted in desc order by score. tuple: (doc_id, score)
     vsm_scores = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, anded_list)
-    print(vsm_scores)
+    
     return [doc_id for doc_id, score in vsm_scores]
     # MIGHT BE NONE TAKE CARE LATER
 
@@ -56,7 +65,12 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
 
         # Get postings list for token.
         postings = utils.get_postings_for_term(token, dictionary, postings_file)
-        truncated_postings = [posting for posting in postings if posting[0] in allowed_doc_ids]
+        
+        #this conditional checks if there is AND in the query, and shrink the postings if there is
+        if allowed_doc_ids is not None:
+            truncated_postings = [posting for posting in postings if posting[0] in allowed_doc_ids]
+        else:
+            truncated_postings = postings
 
         # Compute scores for each document
         for doc_id, term_freq_in_doc in truncated_postings:
