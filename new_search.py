@@ -10,35 +10,38 @@ from collections import Counter, defaultdict
 from postings_eval import evaluate_and
 from functools import reduce
 
-# Returns the fina output for a query
+# Returns the final output for a query
 def evaulate_query(query, doc_length_dictionary, dictionary):
     query_chunks = utils.query_chunker(query)
-    print(query_chunks)
-    chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in query_chunks ]
-    print(chunk_postings)
+    processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
+    
+    chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
+    chunk_postings = [utils.get_first_of_tuple(x) for x in chunk_postings]
 
     #anded_list is the list of postings that satisfy all the AND queries 
     anded_list = reduce(lambda x, y: evaluate_and(x, y), chunk_postings)
-    vsm_scores = get_vsm_scores(query, doc_length_dictionary, dictionary, anded_list)
+
+    #vsm_score is a list of tuple sorted in desc order by score. tuple: (doc_id, score)
+    vsm_scores = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, anded_list)
     print(vsm_scores)
+    return [doc_id for doc_id, score in vsm_scores]
     # MIGHT BE NONE TAKE CARE LATER
+
+def preprocess_string(single_query):
+    processed_query = utils.preprocess_raw_query(single_query)
+    query_tokens = nltk.word_tokenize(processed_query)
+    sanitised_query_tokens = [utils.stem_raw_word(token) for token in query_tokens]
+    return ' '.join(sanitised_query_tokens)
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
 
-def get_vsm_scores(query, doc_length_dictionary, dictionary, allowed_doc_ids=None):
-    # Stems the query and normalises some terms
-    processed_query = utils.preprocess_raw_query(query)
-    query_tokens = nltk.word_tokenize(processed_query)
-    sanitised_query_tokens = [utils.preprocess_raw_word(token) for token in query_tokens]
-
-    allowed_doc_ids = set(allowed_doc_ids)
-
+def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, allowed_doc_ids=None):
     # We convert it to float here so that operations using N later return floats.
     N = float(utils.get_number_of_documents()) 
 
     scores = defaultdict(float)
-    query_vector = Counter(sanitised_query_tokens)
+    query_vector = Counter(processed_query_chunks)
 
     for token in query_vector:
         df = utils.get_doc_freq_for_term(token, dictionary)

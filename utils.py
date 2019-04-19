@@ -15,7 +15,7 @@ def query_combiner(query):
 
 stemmer = PorterStemmer()
 
-def preprocess_raw_word(word):
+def stem_raw_word(word):
 	# Stemming and Casefolding
 	# In most cases stemming lowercases the words but in some special
 	# cases like to, in , the, we found that both TO and to, IN and in
@@ -114,3 +114,7 @@ def generate_occurences_file(dictionary):
     
 def convert_tuple_to_string(tuple):
     return ' '.join(tuple)
+
+
+def get_first_of_tuple(lst_of_tuple):
+    return [x[0] for x in lst_of_tuple]

@@ -8,7 +8,7 @@ import linecache
 import pickle
 import math
 import pandas
-from utils import preprocess_raw_text, deserialize_dictionary, save_to_disk, clock_and_execute, generate_occurences_file, preprocess_raw_word, convert_tuple_to_string
+from utils import preprocess_raw_text, deserialize_dictionary, save_to_disk, clock_and_execute, generate_occurences_file, stem_raw_word, convert_tuple_to_string
 from collections import defaultdict, Counter
 
 def index(input_file, output_file_dictionary, output_file_postings):
@@ -49,6 +49,7 @@ def index(input_file, output_file_dictionary, output_file_postings):
 
     # Saves the postings file and dictionary file to disk
     process_dictionary(dictionary, output_file_dictionary, output_file_postings)
+
 
 def process_dictionary(dictionary, output_file_dictionary, output_file_postings):
     dictionary_to_be_saved = save_to_postings_and_generate_dictionary(dictionary, output_file_postings)
@@ -112,7 +113,7 @@ def process_sentence(sentence):
 Processes the word with operations such as stemming
 '''
 def process_word(word): 
-    return preprocess_raw_word(word)
+    return stem_raw_word(word)
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
