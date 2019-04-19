@@ -7,9 +7,15 @@ from nltk.stem.porter import PorterStemmer
 
 # MARK - TEXT PREPROCESSING FUNCTIONS
 
+def query_chunker(query):
+	return [s.replace("\"", '') for s in query.split(' AND ')]
+
+def query_combiner(query):
+	query.replace("\"", '').replace(' AND ', ' ')
+
 stemmer = PorterStemmer()
 
-def preprocess_raw_word(word):
+def stem_raw_word(word):
 	# Stemming and Casefolding
 	# In most cases stemming lowercases the words but in some special
 	# cases like to, in , the, we found that both TO and to, IN and in
@@ -39,7 +45,7 @@ def preprocess_raw_query(query):
 
 # Get the number of documents
 def get_number_of_documents():
-	with open('doc_length_dictionary.txt') as f:
+	with open('doc_length_dictionary.txt', 'rb') as f:
 		dictionary = pickle.load(f)
 	return len(dictionary)
 
@@ -47,7 +53,7 @@ def get_number_of_documents():
 
 # Load the dictionary from dictionary_file_path using pickle
 def deserialize_dictionary(dictionary_file_path):
-	with open(dictionary_file_path) as f:
+	with open(dictionary_file_path, 'rb') as f:
 		dictionary = pickle.load(f)
 	return dictionary
 
@@ -60,7 +66,7 @@ def get_postings_for_term(term, dictionary, postings_file_path):
     # Byte offset and length of data chunk in postings file
     offset, length, doc_freq = dictionary[term]
     
-    with open(postings_file_path, 'r') as f:
+    with open(postings_file_path, 'rb') as f:
         f.seek(offset)
         posting_byte = f.read(length)
         posting_list = pickle.loads(posting_byte)
@@ -80,7 +86,8 @@ def get_doc_freq_for_term(term, dictionary):
 
 # Save an object to disk 
 def save_to_disk(obj, file):
-  	with open(file, 'w') as fr: pickle.dump(obj, fr)
+    with open(file, 'wb') as fr:
+        pickle.dump(obj, fr)
 
 
 
@@ -103,5 +110,14 @@ def generate_occurences_file(dictionary):
 	len_dict = {word: len(v) for word, v in dictionary.items()}
 	with open("occurences.txt", 'w') as f:
 		for k, v in sorted(len_dict.items(), key=lambda x: x[1]):
-			f.write("{}: {} -> {}\n".format(k.ljust(15), str(v).ljust(5), dictionary[k]))
+			f.write("{}: {} -> {}\n".format(k.ljust(30), str(v).ljust(5), dictionary[k]))
     
+def convert_tuple_to_string(tuple):
+    return ' '.join(tuple)
+
+
+def get_first_of_tuple(lst_of_tuple):
+    return [x[0] for x in lst_of_tuple]
+
+def check_and_existence(query):
+	return "AND" in query
