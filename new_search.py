@@ -13,10 +13,15 @@ from functools import reduce
 # Returns the fina output for a query
 def evaulate_query(query, doc_length_dictionary, dictionary):
     query_chunks = utils.query_chunker(query)
+    print(query_chunks)
     chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in query_chunks ]
+    print(chunk_postings)
 
     #anded_list is the list of postings that satisfy all the AND queries 
-    anded_list = reduce(lambda x, y: evaluate_and(x, y), chunk_postings) 
+    anded_list = reduce(lambda x, y: evaluate_and(x, y), chunk_postings)
+    vsm_scores = get_vsm_scores(query, doc_length_dictionary, dictionary, anded_list)
+    print(vsm_scores)
+    # MIGHT BE NONE TAKE CARE LATER
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")

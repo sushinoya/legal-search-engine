@@ -1,8 +1,8 @@
 import math
 
 def evaluate_and(postings_1, postings_2):
-    doc_ids_1 = map(lambda x: x[0], postings_1)
-    doc_ids_2 = map(lambda x: x[0], postings_2)
+    doc_ids_1 = list(map(lambda x: x[0], postings_1))
+    doc_ids_2 = list(map(lambda x: x[0], postings_2))
     return list_intersection_with_skips(doc_ids_1, doc_ids_2)
 
 
