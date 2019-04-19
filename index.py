@@ -11,6 +11,8 @@ import pandas
 from utils import preprocess_raw_text, deserialize_dictionary, save_to_disk, clock_and_execute, generate_occurences_file, stem_raw_word, convert_tuple_to_string
 from collections import defaultdict, Counter
 
+stemming_dictionary = {}
+
 def index(input_file, output_file_dictionary, output_file_postings):
     df = pandas.read_csv(input_file)
     dictionary = defaultdict(lambda: defaultdict(int))
@@ -50,6 +52,7 @@ def index(input_file, output_file_dictionary, output_file_postings):
     # Saves the postings file and dictionary file to disk
     process_dictionary(dictionary, output_file_dictionary, output_file_postings)
 
+    # sys.exit(0)
 
 def process_dictionary(dictionary, output_file_dictionary, output_file_postings):
     dictionary_to_be_saved = save_to_postings_and_generate_dictionary(dictionary, output_file_postings)
@@ -113,7 +116,12 @@ def process_sentence(sentence):
 Processes the word with operations such as stemming
 '''
 def process_word(word): 
-    return stem_raw_word(word)
+    if word in stemming_dictionary:
+        return stemming_dictionary[word]
+    else:
+        stemmed_word = stem_raw_word(word)
+        stemming_dictionary[word] = stemmed_word
+        return stemmed_word
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")

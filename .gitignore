@@ -4,3 +4,4 @@ __pycache__/
 dictionary.txt
 postings.txt
 occurences.txt
+output.txt

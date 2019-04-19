@@ -9,7 +9,7 @@ else
 fi
 dictionary_file=dictionary.txt
 postings_file=postings.txt
-file_of_queries=dataset/q3.txt
+file_of_queries=dataset/q4.txt
 output_of_results_file=output.txt
 
 if [[ $* == *-no-index* ]]

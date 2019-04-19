@@ -17,7 +17,7 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
     if does_and_exist:
         query_chunks = utils.query_chunker(query)
         processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
-        
+      
         chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
         chunk_postings = [utils.get_first_of_tuple(x) for x in chunk_postings]
 
@@ -29,12 +29,11 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
 
     #if the query has no AND, set it to None to be put into get_vsm_scores
     anded_list = anded_list if does_and_exist else None
-    
+
     #vsm_score is a list of tuple sorted in desc order by score. tuple: (doc_id, score)
     vsm_scores = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, anded_list)
-    
+    print(vsm_scores)
     return [doc_id for doc_id, score in vsm_scores]
-    # MIGHT BE NONE TAKE CARE LATER
 
 def preprocess_string(single_query):
     processed_query = utils.preprocess_raw_query(single_query)
