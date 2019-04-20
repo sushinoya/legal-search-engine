@@ -45,7 +45,7 @@ def preprocess_raw_query(query):
 	return query
 
 def add_vectors(dic1, dic2):
-    indexes = set(dic1.keys() + dic2.keys())
+    indexes = set(list(dic1.keys()) + list(dic2.keys()))
     output = {}
     for index in indexes:
         output[index] = dic1.get(index, 0) + dic2.get(index, 0)
@@ -60,7 +60,7 @@ def get_number_of_documents():
 		dictionary = pickle.load(f)
 	return len(dictionary)
 
-def get_doc_vectors(doc_id):
+def get_doc_vector(doc_id):
 	with open('doc_vector.txt', 'rb') as f:
 		dictionary = pickle.load(f)
 	
