@@ -113,7 +113,10 @@ def get_postings_for_queries(file_of_queries):
     doc_length_dictionary = utils.deserialize_dictionary('doc_length_dictionary.txt')
     dictionary = utils.deserialize_dictionary(dictionary_file)
     
-    query = [line.rstrip('\n') for line in open(file_of_queries)][0]
+
+    lines = [line.rstrip('\n') for line in open(file_of_queries)]
+    query = lines[0]
+    relevant_docs = lines[1:]
     output = evaulate_query(query, doc_length_dictionary, dictionary)
     
     # Write the result to the output file
