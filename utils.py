@@ -4,6 +4,8 @@ import re
 import math
 import os
 from nltk.stem.porter import PorterStemmer
+import nltk
+from collections import defaultdict
 
 # MARK - TEXT PREPROCESSING FUNCTIONS
 
@@ -42,12 +44,28 @@ def preprocess_raw_query(query):
 		query = re.sub(regex, replacement, query)
 	return query
 
+def add_vectors(dic1, dic2):
+    indexes = set(dic1.keys() + dic2.keys())
+    output = {}
+    for index in indexes:
+        output[index] = dic1.get(index, 0) + dic2.get(index, 0)
+    return output
+
+def multiply_vector(dic, multiplier):
+    return { index: value * multiplier for index, value in dic.items() }
 
 # Get the number of documents
 def get_number_of_documents():
 	with open('doc_length_dictionary.txt', 'rb') as f:
 		dictionary = pickle.load(f)
 	return len(dictionary)
+
+def get_doc_vectors(doc_id):
+	with open('doc_vector.txt', 'rb') as f:
+		dictionary = pickle.load(f)
+	
+	return dictionary[doc_id]
+
 
 # MARK - FILE I/O FUNCTIONS
 
@@ -61,7 +79,7 @@ def deserialize_dictionary(dictionary_file_path):
 def get_postings_for_term(term, dictionary, postings_file_path):
     # Handle unseen words
     if term not in dictionary: 
-        return []
+        return {}
 
     # Byte offset and length of data chunk in postings file
     offset, length, doc_freq = dictionary[term]
@@ -69,8 +87,20 @@ def get_postings_for_term(term, dictionary, postings_file_path):
     with open(postings_file_path, 'rb') as f:
         f.seek(offset)
         posting_byte = f.read(length)
-        posting_list = pickle.loads(posting_byte)
-    return posting_list
+        posting_dict = pickle.loads(posting_byte)
+    return posting_dict
+
+
+def get_postings_for_word_or_phrase(term, dictionary, postings_file_path):
+    # Handle Phrase
+    if len(term.split()) > 1:
+        return get_postings_for_phrase(term, dictionary, postings_file_path)
+    # Handle Word
+    else:     
+        posting_dict = get_postings_for_term(term, dictionary, postings_file_path)
+        return { word: len(indexes) for word, indexes in posting_dict.items() }
+
+
 
 # Takes in a term and dictionary, and generate the posting list
 
@@ -121,3 +151,55 @@ def get_first_of_tuple(lst_of_tuple):
 
 def check_and_existence(query):
 	return "AND" in query
+
+
+
+# {
+#     boy: {
+#         docA: [1, 43, 66, 78]
+#         docB: [1, 43, 66, 78]
+#     }
+
+#     this :{
+#         docA : [...]
+#         docC: [...]
+#     }
+# }
+
+# this boy: 
+
+# {
+#     docA : number
+#     docB : number
+# }
+
+def get_postings_for_phrase(query_string, dictionary, postings_file):
+    tokens = query_string.split()
+
+    # Query_dictionaries is a list of dictionaries
+    query_dictionaries = { token: get_postings_for_term(token, dictionary, postings_file) for token in tokens }
+    common_document_ids = set(query_dictionaries[tokens[0]])
+    for doc_index_dict in query_dictionaries.values():
+        common_document_ids = common_document_ids & set(doc_index_dict.keys())
+
+    output = defaultdict(int)
+ 
+    for doc in common_document_ids:
+        phrases = list(nltk.ngrams(tokens, 2))
+        last_round = len(phrases) - 1
+  
+        for iteration_round, phrase in enumerate(phrases):
+            wordA, wordB = phrase
+            position_indexesA = query_dictionaries[wordA][doc]
+            position_indexesB = query_dictionaries[wordB][doc]
+
+            query_dictionaries[wordB][doc] = []
+            
+            indexesB_set = set(position_indexesB)
+            for index in position_indexesA:
+                if index + 1 in indexesB_set:
+                    if iteration_round == last_round: 
+                        output[doc] += 1
+                    query_dictionaries[wordB][doc].append(index + 1)
+
+    return output

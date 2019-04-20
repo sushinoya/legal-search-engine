@@ -18,8 +18,8 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
         query_chunks = utils.query_chunker(query)
         processed_query_chunks = [ ' '.join(preprocess_string(single_query)) for single_query in query_chunks ]
 
-        chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
-        list_list_of_doc_ids = [ utils.get_first_of_tuple(x) for x in chunk_postings ]
+        chunk_postings = [ utils.get_postings_for_word_or_phrase(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
+        list_list_of_doc_ids = [ list(dic.keys()) for dic in chunk_postings ]
 
         #anded_list is the list of postings that satisfy all the AND queries 
         anded_list = reduce(lambda x, y: evaluate_and(x, y), list_list_of_doc_ids)        
@@ -59,6 +59,7 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
     scores = defaultdict(float)
     query_vector = Counter(processed_query_chunks)
 
+    # Construct query vector
     for token in query_vector:
         df = utils.get_doc_freq_for_term(token, dictionary)
         idf = math.log(N / df, 10) if df != 0 else 0.0
@@ -69,10 +70,25 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
 
         # Update term in query vector to reflect tf-idf
         query_vector[token] = tf_idf_query_token
+    
 
-        # Get postings list for token.
-        postings = utils.get_postings_for_term(token, dictionary, postings_file)
-        
+    # # Relevance Feedback
+    # relevant_doc_vectors = []
+    # alpha = 1
+    # beta = 1
+
+    # sum_of_relevant_document_vectors = 
+
+    # new_query_vector = multiply_vectors(query, alpha)
+    # q_m = a * query + b(1/2)(doc1 + doc2)
+
+
+    # Construct document vectors
+    for token in query_vector:
+        # Get postings dictionary for token.
+        postings_dict = utils.get_postings_for_word_or_phrase(token, dictionary, postings_file)
+        postings = postings_dict.keys()
+
         #this conditional checks if there is AND in the query, and shrink the postings if there is
         if allowed_doc_ids is not None:
             truncated_postings = [posting for posting in postings if posting[0] in allowed_doc_ids]
@@ -100,19 +116,11 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
     return sorted(scores.items(), key=lambda kv: -kv[1])
 
 
-'''
-Get the list of all the document ids
-'''
-def get_superset():
-    dictionary = utils.deserialize_dictionary(dictionary_file)
-    return utils.get_postings_for_term('ALL_WORDS_AND_POSTINGS', dictionary, postings_file)
-
-
 # MAIN SEARCH FUNCTION
 def get_postings_for_queries(file_of_queries):
     doc_length_dictionary = utils.deserialize_dictionary('doc_length_dictionary.txt')
     dictionary = utils.deserialize_dictionary(dictionary_file)
-    
+
 
     lines = [line.rstrip('\n') for line in open(file_of_queries)]
     query = lines[0]

@@ -15,7 +15,8 @@ stemming_dictionary = {}
 
 def index(input_file, output_file_dictionary, output_file_postings):
     df = pandas.read_csv(input_file)
-    dictionary = defaultdict(lambda: defaultdict(int))
+    dictionary = defaultdict(lambda: defaultdict(list))
+    doc_vector = {}
     doc_length_dictionary = {}
     num = 1
     total_entries_len = len(list(df.itertuples(index=False)))
@@ -25,29 +26,39 @@ def index(input_file, output_file_dictionary, output_file_postings):
         num += 1
         content = getattr(row, "content")
         document_id = getattr(row, "document_id")
-        
-        words = process_content(content)
-        biwords = list(map(convert_tuple_to_string, nltk.ngrams(words, 2)))
-        triwords = list(map(convert_tuple_to_string, nltk.ngrams(words, 3)))
-        all_tokens = words + biwords + triwords
 
-        for term in all_tokens:
-            dictionary[term][document_id] += 1
+        words = process_content(content)
+        ctr = dict(Counter(words))
+        doc_vector[document_id] = ctr
+        # positional_indexes = [ (word,  index) for index, word in enumerate(words) ]
+        # positional_indexes = { word :  index for index, word in enumerate(words) }
+
+        # {the: {(doc1, [23, 45,..]), (doc2..)}
+        positional_indexes_in_doc = defaultdict(list)
+        for index, word in enumerate(words):
+            positional_indexes_in_doc[word].append(index)
+
+        for word, indexes in positional_indexes_in_doc.items():
+            dictionary[word][document_id] = positional_indexes_in_doc[word]
+
+        # for term in all_tokens:
+        #     dictionary[term][document_id] += 1
 
         # Create dictionary of document length
         tf_dictionary = Counter(words)
         log_tf_dictionary = { word: 1 + math.log(tf, 10) for word, tf in tf_dictionary.items() } 
         length_of_log_tf_vector = math.sqrt(sum([dim * dim for dim in log_tf_dictionary.values()]))
         doc_length_dictionary[document_id] = length_of_log_tf_vector
-        
-    save_to_disk(doc_length_dictionary, "doc_length_dictionary.txt")
 
-    for key, value in dictionary.items():
-        dictionary[key] = sorted(value.items(), key=lambda x: x[0])
+    save_to_disk(doc_length_dictionary, "doc_length_dictionary.txt")
+    save_to_disk(doc_vector, "doc_vector.txt")
+
+    # for key, value in dictionary.items():
+    #     dictionary[key] = sorted(value.items(), key=lambda x: x[0])
     
     # Generates a file of human readable postings and occurences. Maily used for debugging
     # Each line is of the format: `word`: num_of_occurences -> `[2, 10, 34, ...]` (postings list)
-    # generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
+    generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
 
     # Saves the postings file and dictionary file to disk
     process_dictionary(dictionary, output_file_dictionary, output_file_postings)
@@ -74,11 +85,10 @@ def save_to_postings_and_generate_dictionary(dictionary, output_file_postings):
     dictionary_to_be_saved = {}
     current_pointer = 0
     with open(output_file_postings, 'wb') as f:
-        for k, v in dictionary.items():
-            sorted_posting = v
-            f.write(pickle.dumps(sorted_posting)) # Use pickle to save the posting and write to it
+        for term, dictionary_of_doc_to_pos_index in dictionary.items():
+            f.write(pickle.dumps(dictionary_of_doc_to_pos_index)) # Use pickle to save the posting and write to it
             byte_size = f.tell() - current_pointer
-            dictionary_to_be_saved[k] = (current_pointer, byte_size, len(v))
+            dictionary_to_be_saved[term] = (current_pointer, byte_size, len(dictionary_of_doc_to_pos_index.keys()))
             current_pointer = f.tell()
     
     return dictionary_to_be_saved
