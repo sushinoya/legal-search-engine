@@ -16,30 +16,38 @@ def evaulate_query(query, doc_length_dictionary, dictionary):
 
     if does_and_exist:
         query_chunks = utils.query_chunker(query)
-        processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
-      
+        processed_query_chunks = [ ' '.join(preprocess_string(single_query)) for single_query in query_chunks ]
+
         chunk_postings = [ utils.get_postings_for_term(chunk, dictionary, postings_file) for chunk in processed_query_chunks ]
-        chunk_postings = [utils.get_first_of_tuple(x) for x in chunk_postings]
+        list_list_of_doc_ids = [ utils.get_first_of_tuple(x) for x in chunk_postings ]
 
         #anded_list is the list of postings that satisfy all the AND queries 
-        anded_list = reduce(lambda x, y: evaluate_and(x, y), chunk_postings)
+        anded_list = reduce(lambda x, y: evaluate_and(x, y), list_list_of_doc_ids)        
     else:
-        query_chunks = query.split()
-        processed_query_chunks = [preprocess_string(single_query) for single_query in query_chunks]
+        processed_query_chunks = preprocess_string(query)
+        #['scandal', 'exchang', 'evaluate']
+        #['fertility treatment', 'damage']
 
     #if the query has no AND, set it to None to be put into get_vsm_scores
     anded_list = anded_list if does_and_exist else None
 
     #vsm_score is a list of tuple sorted in desc order by score. tuple: (doc_id, score)
     vsm_scores = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, anded_list)
+    print(processed_query_chunks)
     print(vsm_scores)
-    return [doc_id for doc_id, score in vsm_scores]
+    if does_and_exist:
+        top_docs = { doc[0] for doc in vsm_scores }
+        ranked_every_doc = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary)
+        filtered_low_priority_docs = [ doc for doc in ranked_every_doc if doc[0] not in top_docs ]
+
+    combined_score = vsm_scores + (filtered_low_priority_docs if does_and_exist else [])
+    print(combined_score)
+    return [doc_id for doc_id, score in combined_score]
 
 def preprocess_string(single_query):
     processed_query = utils.preprocess_raw_query(single_query)
     query_tokens = nltk.word_tokenize(processed_query)
-    sanitised_query_tokens = [utils.stem_raw_word(token) for token in query_tokens]
-    return ' '.join(sanitised_query_tokens)
+    return [utils.stem_raw_word(token) for token in query_tokens]
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -83,7 +91,6 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
     for doc_id in scores:
         doc_length = doc_length_dictionary[doc_id]
         scores[doc_id] /= doc_length
-        scores[doc_id] /= query_vector_length
         
         # We can also divide by query verctor length but since  every score will be divided by 
         # it then, so it would not make a difference to the final results.

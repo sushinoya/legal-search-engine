@@ -11,7 +11,7 @@ def query_chunker(query):
 	return [s.replace("\"", '') for s in query.split(' AND ')]
 
 def query_combiner(query):
-	query.replace("\"", '').replace(' AND ', ' ')
+	return query.replace("\"", '').replace(' AND ', ' ')
 
 stemmer = PorterStemmer()
 
