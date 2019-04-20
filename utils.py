@@ -63,7 +63,7 @@ def get_number_of_documents():
 def get_doc_vector(doc_id):
 	with open('doc_vector.txt', 'rb') as f:
 		dictionary = pickle.load(f)
-	
+	# print(dictionary.keys())
 	return dictionary[doc_id]
 
 

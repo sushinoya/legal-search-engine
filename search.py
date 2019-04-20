@@ -33,15 +33,15 @@ def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]
 
     #vsm_score is a list of tuple sorted in desc order by score. tuple: (doc_id, score)
     vsm_scores = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, relevant_doc_ids, anded_list)
-    print(processed_query_chunks)
-    print(vsm_scores)
+    # print(processed_query_chunks)
+    # print(vsm_scores)
     if does_and_exist:
         top_docs = { doc[0] for doc in vsm_scores }
         ranked_every_doc = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, relevant_doc_ids)
         filtered_low_priority_docs = [ doc for doc in ranked_every_doc if doc[0] not in top_docs ]
 
     combined_score = vsm_scores + (filtered_low_priority_docs if does_and_exist else [])
-    print(combined_score)
+    # print(combined_score)
     return [doc_id for doc_id, score in combined_score]
 
 def preprocess_string(single_query):
@@ -55,6 +55,7 @@ def usage():
 def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, relevant_doc_ids=[], allowed_doc_ids=None):
     # We convert it to float here so that operations using N later return floats.
     N = float(utils.get_number_of_documents()) 
+    relevant_doc_ids = [int(x) for x in relevant_doc_ids]
 
     scores = defaultdict(float)
     query_vector = Counter(processed_query_chunks)
