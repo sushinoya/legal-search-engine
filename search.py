@@ -61,12 +61,18 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
 
     # Construct query vector
     for token in query_vector:
-        df = utils.get_doc_freq_for_term(token, dictionary)
+        df = utils.get_doc_freq_for_term(token, dictionary, postings_file)
         idf = math.log(N / df, 10) if df != 0 else 0.0
         log_tf = 1 + math.log(query_vector[token], 10)
 
         # Compute the weight for the token in the query
         tf_idf_query_token = log_tf * idf
+        # print("=======================")
+        # print(f"token: {token}")
+        # print(f"log_tf: {log_tf}")
+        # print(f"idf: {idf}")
+        # print(f"df: {df}")
+        # print("=======================")
 
         # Update term in query vector to reflect tf-idf
         query_vector[token] = tf_idf_query_token
@@ -85,19 +91,22 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, al
 
     # Construct document vectors
     for token in query_vector:
-        # Get postings dictionary for token.
+        # Get postings dictionary for token {doc_id, term_freq}
         postings_dict = utils.get_postings_for_word_or_phrase(token, dictionary, postings_file)
         postings = postings_dict.keys()
 
         #this conditional checks if there is AND in the query, and shrink the postings if there is
         if allowed_doc_ids is not None:
-            truncated_postings = [posting for posting in postings if posting[0] in allowed_doc_ids]
+            truncated_postings = [posting for posting in postings if posting in allowed_doc_ids]
         else:
             truncated_postings = postings
 
         # Compute scores for each document
-        for doc_id, term_freq_in_doc in truncated_postings:
+        for doc_id in truncated_postings:
+            term_freq_in_doc = postings_dict[doc_id]
+            tf_idf_query_token = query_vector[token]
             log_tf_in_doc = 1 + math.log(term_freq_in_doc, 10)
+            # print(f"tf_idf_query_token: {tf_idf_query_token}")
 
             scores[doc_id] += log_tf_in_doc * tf_idf_query_token
 

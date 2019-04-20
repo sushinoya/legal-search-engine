@@ -105,7 +105,11 @@ def get_postings_for_word_or_phrase(term, dictionary, postings_file_path):
 # Takes in a term and dictionary, and generate the posting list
 
 
-def get_doc_freq_for_term(term, dictionary):
+def get_doc_freq_for_term(term, dictionary, postings_file):
+    # Handle Phrases
+    if len(term.split()) > 1:
+        return len(get_postings_for_phrase(term, dictionary, postings_file))
+
     # Handle unseen words
     if term not in dictionary:
         return 0
