@@ -6,6 +6,7 @@ import os
 from nltk.stem.porter import PorterStemmer
 import nltk
 from collections import defaultdict
+from nltk.corpus import wordnet as wn
 
 # MARK - TEXT PREPROCESSING FUNCTIONS
 
@@ -207,3 +208,14 @@ def get_postings_for_phrase(query_string, dictionary, postings_file):
                     query_dictionaries[wordB][doc].append(index + 1)
 
     return output
+
+def flatten_list_of_list(list_of_list):
+    return [y for x in list_of_list for y in x]
+
+def wordnet_generate_synonyms(list_of_queries):
+    sysnet_for_queries = [wn.synsets(query) for query in list_of_queries] #generates a list of list
+    flattened_sysnet = flatten_list_of_list(sysnet_for_queries)
+    lemma_names_list = [x.lemma_names() for x in flattened_sysnet]
+    flattened_lemma_names = flatten_list_of_list(lemma_names_list)
+    unique_lemma_names = list(set(flattened_lemma_names))
+    return unique_lemma_names
