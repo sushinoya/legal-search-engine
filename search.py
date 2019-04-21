@@ -38,9 +38,9 @@ def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]
 
     #vsm_score is a list of tuple sorted in desc order by score. tuple: (doc_id, score)
     vsm_scores = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, relevant_doc_ids, anded_list)
-    # print(processed_query_chunks)
-    # print(vsm_scores)
+
     if does_and_exist:
+        #top_docs are documents that satisfy all AND condition
         top_docs = { doc[0] for doc in vsm_scores }
 
         # ============= wordnet =====================================
@@ -49,10 +49,12 @@ def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]
         # =============== end of wordnet generation ==================
 
         ranked_every_doc = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, relevant_doc_ids)
+        
+        #filter out the documents that has been retrieved in the top_docs
         filtered_low_priority_docs = [ doc for doc in ranked_every_doc if doc[0] not in top_docs ]
 
     combined_score = vsm_scores + (filtered_low_priority_docs if does_and_exist else [])
-    # print(combined_score)
+    
     return [doc_id for doc_id, score in combined_score]
 
 def preprocess_string(single_query):
@@ -109,8 +111,6 @@ def get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, re
     normalising_length_of_vectors = 1/len(relevant_doc_ids) if len(relevant_doc_ids) > 0 else 1
     normalised_sum_of_doc_vectors = utils.multiply_vector(scaled_sum_of_doc_vectors, normalising_length_of_vectors)
     new_query_vector = utils.add_vectors(utils.multiply_vector(query_vector, alpha), normalised_sum_of_doc_vectors)
-    # q_m = a * query + b(1/2)(doc1 + doc2)
-
 
     # Construct document vectors
     for token in new_query_vector:

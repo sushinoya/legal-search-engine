@@ -18,22 +18,19 @@ def index(input_file, output_file_dictionary, output_file_postings):
     dictionary = defaultdict(lambda: defaultdict(list))
     doc_vector = {}
     doc_length_dictionary = {}
-    num = 1
-    total_entries_len = len(list(df.itertuples(index=False)))
+    # num = 1
+    # total_entries_len = len(list(df.itertuples(index=False)))
 
     for row in df.itertuples(index=False):
-        print(f'currently indexing number {num}, {num / total_entries_len * 100}% done')
-        num += 1
+        # print(f'currently indexing number {num}, {num / total_entries_len * 100}% done')
+        # num += 1
         content = getattr(row, "content")
         document_id = getattr(row, "document_id")
 
         words = process_content(content)
         ctr = dict(Counter(words))
-        doc_vector[document_id] = ctr
-        # positional_indexes = [ (word,  index) for index, word in enumerate(words) ]
-        # positional_indexes = { word :  index for index, word in enumerate(words) }
+        doc_vector[document_id] = ctr # Store the document vector into a dictionary to be saved later
 
-        # {the: {(doc1, [23, 45,..]), (doc2..)}
         positional_indexes_in_doc = defaultdict(list)
         for index, word in enumerate(words):
             positional_indexes_in_doc[word].append(index)
@@ -41,8 +38,6 @@ def index(input_file, output_file_dictionary, output_file_postings):
         for word, indexes in positional_indexes_in_doc.items():
             dictionary[word][document_id] = positional_indexes_in_doc[word]
 
-        # for term in all_tokens:
-        #     dictionary[term][document_id] += 1
 
         # Create dictionary of document length
         tf_dictionary = Counter(words)
@@ -58,7 +53,7 @@ def index(input_file, output_file_dictionary, output_file_postings):
     
     # Generates a file of human readable postings and occurences. Maily used for debugging
     # Each line is of the format: `word`: num_of_occurences -> `[2, 10, 34, ...]` (postings list)
-    generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
+    #generate_occurences_file(dictionary)  # Uncomment the next line if needed for debugging
 
     # Saves the postings file and dictionary file to disk
     process_dictionary(dictionary, output_file_dictionary, output_file_postings)

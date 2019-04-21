@@ -45,6 +45,7 @@ def preprocess_raw_query(query):
 		query = re.sub(regex, replacement, query)
 	return query
 
+#add 2 vectors together. The vectors are represented in terms of dictionaries
 def add_vectors(dic1, dic2):
     indexes = set(list(dic1.keys()) + list(dic2.keys()))
     output = {}
@@ -61,10 +62,11 @@ def get_number_of_documents():
 		dictionary = pickle.load(f)
 	return len(dictionary)
 
+# Retrieve the document vector
 def get_doc_vector(doc_id):
 	with open('doc_vector.txt', 'rb') as f:
 		dictionary = pickle.load(f)
-	# print(dictionary.keys())
+
 	return dictionary[doc_id]
 
 
@@ -91,7 +93,7 @@ def get_postings_for_term(term, dictionary, postings_file_path):
         posting_dict = pickle.loads(posting_byte)
     return posting_dict
 
-
+# Retrieve the postings for a single word or a phrase
 def get_postings_for_word_or_phrase(term, dictionary, postings_file_path):
     # Handle Phrase
     if len(term.split()) > 1:
@@ -103,9 +105,7 @@ def get_postings_for_word_or_phrase(term, dictionary, postings_file_path):
 
 
 
-# Takes in a term and dictionary, and generate the posting list
-
-
+# Takes in a term, dictionary, and postings file, and generate the posting list
 def get_doc_freq_for_term(term, dictionary, postings_file):
     # Handle Phrases
     if len(term.split()) > 1:
@@ -157,27 +157,9 @@ def get_first_of_tuple(lst_of_tuple):
 def check_and_existence(query):
 	return "AND" in query
 
-
-
-# {
-#     boy: {
-#         docA: [1, 43, 66, 78]
-#         docB: [1, 43, 66, 78]
-#     }
-
-#     this :{
-#         docA : [...]
-#         docC: [...]
-#     }
-# }
-
-# this boy: 
-
-# {
-#     docA : number
-#     docB : number
-# }
-
+# Get the postings for a phrase, e.g. 'a tiny boy'
+# This function will retrieve the postings for 'a', 'tiny', and 'boy'
+# and get the get the postings based on the positional indices of each word in the phrase
 def get_postings_for_phrase(query_string, dictionary, postings_file):
     tokens = query_string.split()
 
@@ -212,6 +194,7 @@ def get_postings_for_phrase(query_string, dictionary, postings_file):
 def flatten_list_of_list(list_of_list):
     return [y for x in list_of_list for y in x]
 
+# Generate synonyms for a list of queries based on wordnet
 def wordnet_generate_synonyms(list_of_queries):
     sysnet_for_queries = [wn.synsets(query) for query in list_of_queries] #generates a list of list
     flattened_sysnet = flatten_list_of_list(sysnet_for_queries)
