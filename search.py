@@ -10,7 +10,9 @@ from collections import Counter, defaultdict
 from postings_eval import evaluate_and
 from functools import reduce
 
+# Switches to turn query expansions on or off
 wordnet_switch = False
+relevance_feedback_switch = False
 
 # Returns the final output for a query
 def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]):
@@ -156,7 +158,7 @@ def get_postings_for_queries(file_of_queries):
 
     lines = [line.rstrip('\n') for line in open(file_of_queries)]
     query = lines[0]
-    relevant_doc_ids = lines[1:]
+    relevant_doc_ids = lines[1:] if relevance_feedback_switch else [] # Use or don't use relevance feedback
     output = evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids)
     
     # Write the result to the output file
