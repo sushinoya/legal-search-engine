@@ -10,6 +10,8 @@ from collections import Counter, defaultdict
 from postings_eval import evaluate_and
 from functools import reduce
 
+wordnet_switch = False
+
 # Returns the final output for a query
 def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]):
     does_and_exist = utils.check_and_existence(query)
@@ -25,8 +27,11 @@ def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]
         anded_list = reduce(lambda x, y: evaluate_and(x, y), list_list_of_doc_ids)        
     else:
         processed_query_chunks = preprocess_string(query)
-        #['scandal', 'exchang', 'evaluate']
-        #['fertility treatment', 'damage']
+        
+        # ============= wordnet =====================================
+        if wordnet_switch:
+            processed_query_chunks = utils.wordnet_generate_synonyms(query.split())
+        # =============== end of wordnet generation ==================
 
     #if the query has no AND, set it to None to be put into get_vsm_scores
     anded_list = anded_list if does_and_exist else None
@@ -37,6 +42,12 @@ def evaulate_query(query, doc_length_dictionary, dictionary, relevant_doc_ids=[]
     # print(vsm_scores)
     if does_and_exist:
         top_docs = { doc[0] for doc in vsm_scores }
+
+        # ============= wordnet =====================================
+        if wordnet_switch:
+            processed_query_chunks = utils.wordnet_generate_synonyms(query_chunks)
+        # =============== end of wordnet generation ==================
+
         ranked_every_doc = get_vsm_scores(processed_query_chunks, doc_length_dictionary, dictionary, relevant_doc_ids)
         filtered_low_priority_docs = [ doc for doc in ranked_every_doc if doc[0] not in top_docs ]
 
